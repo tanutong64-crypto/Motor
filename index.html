@@ -1,135 +1,207 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>AR ปลาว่ายวน เพิ่มความเร็ว</title>
-    
-    <!-- นำเข้า A-Frame และ AR.js -->
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>AR 5 Fishes Swimming - Hiro Marker</title>
 
-    <style>
-        body { margin: 0; overflow: hidden; font-family: Sans-Serif; }
+  <!-- A-Frame และ AR.js -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #000;
+    }
+
+    #controls {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .speed-badge {
+      background: rgba(0, 0, 0, 0.7);
+      color: #00e676;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      backdrop-filter: blur(4px);
+    }
+
+    button {
+      min-width: 180px;
+      height: 48px;
+      border: 0;
+      border-radius: 24px;
+      background: #ff4757;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+      touch-action: manipulation;
+      transition: transform 0.1s, background 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.95);
+      background: #ff6b81;
+    }
+  </style>
+
+  <script>
+    // สคริปต์ควบคุมการว่ายวน ส่ายหาง และลอยตัวของปลา
+    AFRAME.registerComponent('swim-fish', {
+      schema: {
+        radius: { type: 'number', default: 0.8 },
+        speed: { type: 'number', default: 35 },
+        height: { type: 'number', default: 0.3 },
+        phase: { type: 'number', default: 0 }
+      },
+
+      init: function () {
+        this.angle = this.data.phase;
+        this.speedMultiplier = 1;
+      },
+
+      setMultiplier: function (mult) {
+        this.speedMultiplier = mult;
+      },
+
+      tick: function (time, deltaTime) {
+        if (!deltaTime) return;
+
+        // คำนวณตำแหน่งวงกลม
+        const currentSpeed = this.data.speed * this.speedMultiplier;
+        this.angle += (currentSpeed * deltaTime) / 1000;
+
+        const rad = THREE.MathUtils.degToRad(this.angle);
+        const r = this.data.radius;
+
+        const x = Math.cos(rad) * r;
+        const z = Math.sin(rad) * r;
+        // การลอยตัวขึ้น-ลง ตามคลื่น
+        const y = this.data.height + Math.sin(time / 250 + this.data.phase) * 0.05;
+
+        this.el.object3D.position.set(x, y, z);
+
+        // หันหน้าปลาตามทิศทางที่ว่ายไป
+        this.el.object3D.rotation.y = -rad + Math.PI / 2;
+
+        // เอฟเฟกต์ส่ายหาง
+        const tail = this.el.querySelector('.fish-tail');
+        if (tail) {
+          tail.object3D.rotation.y = Math.sin(time / 80 * this.speedMultiplier) * 0.35;
+        }
+      }
+    });
+
+    // ตัวสร้างโครงสร้างปลา 3D จาก Primitives
+    function createFishEntity(data) {
+      const fish = document.createElement('a-entity');
+      fish.setAttribute('swim-fish', `radius: ${data.radius}; speed: ${data.speed}; height: ${data.height}; phase: ${data.phase}`);
+
+      fish.innerHTML = `
+        <!-- ลำตัวหลัก -->
+        <a-sphere position="0 0 0" radius-x="0.18" radius-y="0.10" radius-z="0.06" color="${data.bodyColor}"></a-sphere>
         
-        /* สไตล์ปุ่มกด */
-        #ui-container {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            text-align: center;
-        }
+        <!-- ตาซ้าย-ขวา -->
+        <a-sphere position="0.09 0.03 0.045" radius="0.025" color="#ffffff">
+          <a-sphere position="0.01 0 0.012" radius="0.012" color="#000000"></a-sphere>
+        </a-sphere>
+        <a-sphere position="0.09 0.03 -0.045" radius="0.025" color="#ffffff">
+          <a-sphere position="0.01 0 -0.012" radius="0.012" color="#000000"></a-sphere>
+        </a-sphere>
 
-        .btn {
-            background-color: #ff4757;
-            border: none;
-            color: white;
-            padding: 15px 25px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 18px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 50px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: background-color 0.3s;
-        }
+        <!-- ครีบหลัง -->
+        <a-cone position="-0.03 0.11 0" rotation="0 0 -25" radius-bottom="0.06" height="0.1" color="${data.finColor}"></a-cone>
 
-        .btn:active {
-            background-color: #ff6b81;
-            transform: scale(0.95);
-        }
+        <!-- ครีบข้าง -->
+        <a-box position="0.03 -0.02 0.07" rotation="15 -25 -10" width="0.08" height="0.008" depth="0.05" color="${data.finColor}"></a-box>
+        <a-box position="0.03 -0.02 -0.07" rotation="-15 -25 10" width="0.08" height="0.008" depth="0.05" color="${data.finColor}"></a-box>
 
-        #speed-display {
-            background-color: rgba(0,0,0,0.5);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-    </style>
+        <!-- ข้อต่อหาง (ส่ายได้) -->
+        <a-entity class="fish-tail" position="-0.16 0 0">
+          <a-cone position="-0.06 0 0" rotation="0 0 -90" radius-bottom="0.09" height="0.12" color="${data.finColor}"></a-cone>
+        </a-entity>
+      `;
+      return fish;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const fishGroup = document.querySelector('#fish-group');
+      const speedBtn = document.querySelector('#speed-btn');
+      const speedDisplay = document.querySelector('#speed-display');
+
+      // ข้อมูลปลาทั้ง 5 ตัว (รัศมี, ความเร็วพื้นฐาน, ความสูง, มุมเริ่มต้น, สี)
+      const fishesData = [
+        { radius: 0.45, speed: 45, height: 0.25, phase: 0,   bodyColor: '#FF7F50', finColor: '#FF4500' }, // ส้ม
+        { radius: 0.65, speed: 38, height: 0.40, phase: 72,  bodyColor: '#2ED573', finColor: '#1E90FF' }, // เขียว/น้ำเงิน
+        { radius: 0.85, speed: 32, height: 0.20, phase: 144, bodyColor: '#ECCC68', finColor: '#FF6348' }, // เหลือง
+        { radius: 1.05, speed: 28, height: 0.50, phase: 216, bodyColor: '#A55EEA', finColor: '#FF78C4' }, // ม่วง/ชมพู
+        { radius: 1.25, speed: 25, height: 0.35, phase: 288, bodyColor: '#70A1FF', finColor: '#1E90FF' }  // ฟ้า
+      ];
+
+      const fishEntities = [];
+
+      // สร้างปลา 5 ตัวเข้าฉาก
+      fishesData.forEach(data => {
+        const fishEl = createFishEntity(data);
+        fishGroup.appendChild(fishEl);
+        fishEntities.push(fishEl);
+      });
+
+      // ระบบเพิ่มความเร็ว
+      const speeds = [1, 1.5, 2, 3, 4];
+      let speedIndex = 0;
+
+      speedBtn.addEventListener('click', () => {
+        speedIndex = (speedIndex + 1) % speeds.length;
+        const currentMult = speeds[speedIndex];
+
+        fishEntities.forEach(fish => {
+          fish.components['swim-fish'].setMultiplier(currentMult);
+        });
+
+        speedDisplay.textContent = `ความเร็ว: ${currentMult}x`;
+      });
+    });
+  </script>
 </head>
 
 <body>
+  <div id="controls">
+    <div id="speed-display" class="speed-badge">ความเร็ว: 1x</div>
+    <button id="speed-btn" type="button">⚡ เพิ่มความเร็ว</button>
+  </div>
 
-    <!-- UI หน้าจอ -->
-    <div id="ui-container">
-        <div id="speed-display">ความเร็ว: <span id="current-speed">1</span>x</div>
-        <button id="speed-btn" class="btn">⚡ เพิ่มความเร็ว!</button>
-    </div>
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; antialias: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false;"
+  >
+    <a-marker preset="hiro" id="hiro-marker">
+      <!-- กลุ่มปลา 5 ตัว -->
+      <a-entity id="fish-group" position="0 0 0"></a-entity>
 
-    <!-- ฉาก A-Frame AR -->
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-        
-        <!-- กำหนด Hiro Marker -->
-        <a-marker preset="hiro">
-            
-            <!-- โมเดลปลา (ใช้ทรงกระบอก+กล่องแบบง่ายเพื่อให้โค้ดจบในไฟล์เดียว) 
-                 หรือเปลี่ยน <a-entity> ด้านล่างเป็น <a-gltf-model> ถ้ามีโมเดลจริง -->
-            
-            <a-entity id="fish-container" rotation="0 0 0">
-                <!-- ตัวปลา -->
-                <a-cone position="0.5 0 0" rotation="0 0 -90" radius-bottom="0.1" radius-top="0.01" height="0.4" color="orange"></a-cone>
-                <!-- หาง -->
-                <a-box position="0.75 0 0" width="0.05" height="0.2" depth="0.1" color="red"></a-box>
-            </a-entity>
+      <!-- วงน้ำจำลองบนพื้น Marker -->
+      <a-ring position="0 0.02 0" rotation="-90 0 0" radius-inner="0.2" radius-outer="1.3" color="#00d2d3" opacity="0.25"></a-ring>
+    </a-marker>
 
-        </a-marker>
-
-        <!-- กล้อง AR -->
-        <a-entity camera></a-entity>
-    </a-scene>
-
-    <script>
-        // เริ่มต้นค่า
-        var currentSpeed = 1;
-        var baseRotationSpeed = 100; // องศาต่อวินาที
-
-        var fishContainer = document.getElementById('fish-container');
-        var speedBtn = document.getElementById('speed-btn');
-        var currentSpeedText = document.getElementById('current-speed');
-
-        // ฟังก์ชันอัปเดตแอนิเมชั่น (เพราะ A-Frame 1.3.0+ แนะนำให้นึกถึง speed ใน logic)
-        function updateAnimation() {
-            // คำนวณความเร็วในการหมุนใหม่
-            var newRotationSpeed = baseRotationSpeed * currentSpeed;
-
-            // อัปเดตแอนิเมชั่นให้หมุนรอบแกน Y (ว่ายวน)
-            // เราลบ component เก่าออกก่อนเพื่อให้มันเริ่มรอบใหม่ทันที
-            fishContainer.removeAttribute('animation');
-            
-            // เพิ่ม component แอนิเมชั่นใหม่
-            fishContainer.setAttribute('animation', {
-                property: 'rotation',
-                to: '0 360 0',
-                loop: true,
-                dur: (360 / newRotationSpeed) * 1000, // คำนวณระยะเวลา (ms) จากองศา
-                easing: 'linear'
-            });
-
-            // อัปเดต UI
-            currentSpeedText.innerText = currentSpeed.toFixed(1);
-        }
-
-        // เริ่มแอนิเมชั่นครั้งแรก
-        updateAnimation();
-
-        // เหตุการณ์เมื่อกดปุ่มเพิ่มความเร็ว
-        speedBtn.addEventListener('click', function() {
-            // เพิ่มความเร็วทีละ 0.5
-            currentSpeed += 0.5;
-
-            // จำกัดความเร็วสูงสุดไว้ที่ 5x (เพื่อไม่ให้ปลิว)
-            if (currentSpeed > 5) {
-                currentSpeed = 1; // เวียนกลับมา 1 ใหม่
-            }
-
-            // อัปเดตแอนิเมชั่น
-            updateAnimation();
-        });
-    </script>
+    <a-entity camera></a-entity>
+  </a-scene>
 </body>
 </html>
