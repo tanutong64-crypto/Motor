@@ -96,8 +96,10 @@
 
         this.el.object3D.position.set(x, y, z);
 
-        // หันหน้าปลาตามทิศทางการว่ายมุ่งหน้าไปด้านหน้า (แก้ไขมุมเป็น -rad - PI/2)
-        this.el.object3D.rotation.y = -rad - Math.PI / 2;
+        // คำนวณ Vector ทิศทางการเคลื่อนที่และกลับมุม 180 องศา (+ Math.PI) ให้หัวปลาพุ่งไปข้างหน้า
+        const dx = -Math.sin(rad);
+        const dz = Math.cos(rad);
+        this.el.object3D.rotation.y = -Math.atan2(dz, dx) + Math.PI;
 
         // ส่ายหาง
         const tail = this.el.querySelector('.fish-tail');
