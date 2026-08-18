@@ -65,9 +65,9 @@
     // สคริปต์ควบคุมการว่ายวน ส่ายหาง และลอยตัวของปลา
     AFRAME.registerComponent('swim-fish', {
       schema: {
-        radius: { type: 'number', default: 0.8 },
+        radius: { type: 'number', default: 0.5 },
         speed: { type: 'number', default: 35 },
-        height: { type: 'number', default: 0.3 },
+        height: { type: 'number', default: 0.2 },
         phase: { type: 'number', default: 0 }
       },
 
@@ -92,49 +92,50 @@
 
         const x = Math.cos(rad) * r;
         const z = Math.sin(rad) * r;
-        // การลอยตัวขึ้น-ลง ตามคลื่น
-        const y = this.data.height + Math.sin(time / 250 + this.data.phase) * 0.05;
+        const y = this.data.height + Math.sin(time / 250 + this.data.phase) * 0.03;
 
         this.el.object3D.position.set(x, y, z);
 
-        // หันหน้าปลาตามทิศทางที่ว่ายไป
+        // หันหน้าปลาตามทิศทางการว่าย
         this.el.object3D.rotation.y = -rad + Math.PI / 2;
 
-        // เอฟเฟกต์ส่ายหาง
+        // ส่ายหาง
         const tail = this.el.querySelector('.fish-tail');
         if (tail) {
-          tail.object3D.rotation.y = Math.sin(time / 80 * this.speedMultiplier) * 0.35;
+          tail.object3D.rotation.y = Math.sin(time / 80 * this.speedMultiplier) * 0.4;
         }
       }
     });
 
-    // ตัวสร้างโครงสร้างปลา 3D จาก Primitives
+    // สร้างโมเดลปลาแบบย่อขนาดพอดีกับกล้อง
     function createFishEntity(data) {
       const fish = document.createElement('a-entity');
       fish.setAttribute('swim-fish', `radius: ${data.radius}; speed: ${data.speed}; height: ${data.height}; phase: ${data.phase}`);
 
       fish.innerHTML = `
-        <!-- ลำตัวหลัก -->
-        <a-sphere position="0 0 0" radius-x="0.18" radius-y="0.10" radius-z="0.06" color="${data.bodyColor}"></a-sphere>
-        
-        <!-- ตาซ้าย-ขวา -->
-        <a-sphere position="0.09 0.03 0.045" radius="0.025" color="#ffffff">
-          <a-sphere position="0.01 0 0.012" radius="0.012" color="#000000"></a-sphere>
-        </a-sphere>
-        <a-sphere position="0.09 0.03 -0.045" radius="0.025" color="#ffffff">
-          <a-sphere position="0.01 0 -0.012" radius="0.012" color="#000000"></a-sphere>
-        </a-sphere>
+        <a-entity scale="0.6 0.6 0.6">
+          <!-- ลำตัว (บีบทรงกลมให้รีเป็นตัวปลา) -->
+          <a-sphere position="0 0 0" radius="0.2" scale="1 0.5 0.3" color="${data.bodyColor}"></a-sphere>
 
-        <!-- ครีบหลัง -->
-        <a-cone position="-0.03 0.11 0" rotation="0 0 -25" radius-bottom="0.06" height="0.1" color="${data.finColor}"></a-cone>
+          <!-- ตาซ้าย-ขวา -->
+          <a-sphere position="0.12 0.03 0.04" radius="0.03" color="#ffffff">
+            <a-sphere position="0.01 0 0.015" radius="0.012" color="#000000"></a-sphere>
+          </a-sphere>
+          <a-sphere position="0.12 0.03 -0.04" radius="0.03" color="#ffffff">
+            <a-sphere position="0.01 0 -0.015" radius="0.012" color="#000000"></a-sphere>
+          </a-sphere>
 
-        <!-- ครีบข้าง -->
-        <a-box position="0.03 -0.02 0.07" rotation="15 -25 -10" width="0.08" height="0.008" depth="0.05" color="${data.finColor}"></a-box>
-        <a-box position="0.03 -0.02 -0.07" rotation="-15 -25 10" width="0.08" height="0.008" depth="0.05" color="${data.finColor}"></a-box>
+          <!-- ครีบหลัง -->
+          <a-cone position="-0.02 0.12 0" rotation="0 0 -30" radius-bottom="0.06" radius-top="0.001" height="0.1" color="${data.finColor}"></a-cone>
 
-        <!-- ข้อต่อหาง (ส่ายได้) -->
-        <a-entity class="fish-tail" position="-0.16 0 0">
-          <a-cone position="-0.06 0 0" rotation="0 0 -90" radius-bottom="0.09" height="0.12" color="${data.finColor}"></a-cone>
+          <!-- ครีบข้าง -->
+          <a-box position="0.04 -0.02 0.07" rotation="15 -30 -10" width="0.08" height="0.008" depth="0.04" color="${data.finColor}"></a-box>
+          <a-box position="0.04 -0.02 -0.07" rotation="-15 -30 10" width="0.08" height="0.008" depth="0.04" color="${data.finColor}"></a-box>
+
+          <!-- ข้อต่อหางส่ายได้ -->
+          <a-entity class="fish-tail" position="-0.18 0 0">
+            <a-cone position="-0.06 0 0" rotation="0 0 -90" radius-bottom="0.1" radius-top="0.001" height="0.12" color="${data.finColor}"></a-cone>
+          </a-entity>
         </a-entity>
       `;
       return fish;
@@ -145,25 +146,24 @@
       const speedBtn = document.querySelector('#speed-btn');
       const speedDisplay = document.querySelector('#speed-display');
 
-      // ข้อมูลปลาทั้ง 5 ตัว (รัศมี, ความเร็วพื้นฐาน, ความสูง, มุมเริ่มต้น, สี)
+      // กำหนดค่าปลาทั้ง 5 ตัว (รัศมีวงเลี้ยว, ความเร็ว, ความสูง, มุมเริ่มต้น, สีตัว, สีครีบ)
       const fishesData = [
-        { radius: 0.45, speed: 45, height: 0.25, phase: 0,   bodyColor: '#FF7F50', finColor: '#FF4500' }, // ส้ม
-        { radius: 0.65, speed: 38, height: 0.40, phase: 72,  bodyColor: '#2ED573', finColor: '#1E90FF' }, // เขียว/น้ำเงิน
-        { radius: 0.85, speed: 32, height: 0.20, phase: 144, bodyColor: '#ECCC68', finColor: '#FF6348' }, // เหลือง
-        { radius: 1.05, speed: 28, height: 0.50, phase: 216, bodyColor: '#A55EEA', finColor: '#FF78C4' }, // ม่วง/ชมพู
-        { radius: 1.25, speed: 25, height: 0.35, phase: 288, bodyColor: '#70A1FF', finColor: '#1E90FF' }  // ฟ้า
+        { radius: 0.35, speed: 45, height: 0.20, phase: 0,   bodyColor: '#FF7F50', finColor: '#FF4500' }, // ส้ม
+        { radius: 0.50, speed: 38, height: 0.30, phase: 72,  bodyColor: '#2ED573', finColor: '#10AC84' }, // เขียว
+        { radius: 0.65, speed: 32, height: 0.15, phase: 144, bodyColor: '#FF9F1A', finColor: '#FF3838' }, // เหลือง
+        { radius: 0.80, speed: 28, height: 0.35, phase: 216, bodyColor: '#A55EEA', finColor: '#FF78C4' }, // ม่วง
+        { radius: 0.95, speed: 25, height: 0.25, phase: 288, bodyColor: '#18DCFF', finColor: '#0ABDE3' }  // ฟ้า
       ];
 
       const fishEntities = [];
 
-      // สร้างปลา 5 ตัวเข้าฉาก
       fishesData.forEach(data => {
         const fishEl = createFishEntity(data);
         fishGroup.appendChild(fishEl);
         fishEntities.push(fishEl);
       });
 
-      // ระบบเพิ่มความเร็ว
+      // ปุ่มเพิ่มความเร็ว
       const speeds = [1, 1.5, 2, 3, 4];
       let speedIndex = 0;
 
@@ -194,11 +194,9 @@
     arjs="sourceType: webcam; debugUIEnabled: false;"
   >
     <a-marker preset="hiro" id="hiro-marker">
-      <!-- กลุ่มปลา 5 ตัว -->
       <a-entity id="fish-group" position="0 0 0"></a-entity>
-
-      <!-- วงน้ำจำลองบนพื้น Marker -->
-      <a-ring position="0 0.02 0" rotation="-90 0 0" radius-inner="0.2" radius-outer="1.3" color="#00d2d3" opacity="0.25"></a-ring>
+      <!-- วงน้ำบนพื้น Marker -->
+      <a-ring position="0 0.02 0" rotation="-90 0 0" radius-inner="0.1" radius-outer="1.0" color="#00d2d3" opacity="0.25"></a-ring>
     </a-marker>
 
     <a-entity camera></a-entity>
