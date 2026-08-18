@@ -96,8 +96,8 @@
 
         this.el.object3D.position.set(x, y, z);
 
-        // หันหน้าปลาตามทิศทางการว่าย
-        this.el.object3D.rotation.y = -rad + Math.PI / 2;
+        // หันหน้าปลาตามทิศทางการว่ายมุ่งหน้าไปด้านหน้า (แก้ไขมุมเป็น -rad - PI/2)
+        this.el.object3D.rotation.y = -rad - Math.PI / 2;
 
         // ส่ายหาง
         const tail = this.el.querySelector('.fish-tail');
@@ -107,14 +107,14 @@
       }
     });
 
-    // สร้างโมเดลปลาแบบย่อขนาดพอดีกับกล้อง
+    // สร้างโมเดลปลา
     function createFishEntity(data) {
       const fish = document.createElement('a-entity');
       fish.setAttribute('swim-fish', `radius: ${data.radius}; speed: ${data.speed}; height: ${data.height}; phase: ${data.phase}`);
 
       fish.innerHTML = `
         <a-entity scale="0.6 0.6 0.6">
-          <!-- ลำตัว (บีบทรงกลมให้รีเป็นตัวปลา) -->
+          <!-- ลำตัวปลา -->
           <a-sphere position="0 0 0" radius="0.2" scale="1 0.5 0.3" color="${data.bodyColor}"></a-sphere>
 
           <!-- ตาซ้าย-ขวา -->
@@ -146,7 +146,7 @@
       const speedBtn = document.querySelector('#speed-btn');
       const speedDisplay = document.querySelector('#speed-display');
 
-      // กำหนดค่าปลาทั้ง 5 ตัว (รัศมีวงเลี้ยว, ความเร็ว, ความสูง, มุมเริ่มต้น, สีตัว, สีครีบ)
+      // กำหนดค่าปลาทั้ง 5 ตัว
       const fishesData = [
         { radius: 0.35, speed: 45, height: 0.20, phase: 0,   bodyColor: '#FF7F50', finColor: '#FF4500' }, // ส้ม
         { radius: 0.50, speed: 38, height: 0.30, phase: 72,  bodyColor: '#2ED573', finColor: '#10AC84' }, // เขียว
