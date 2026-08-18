@@ -62,7 +62,7 @@
   </style>
 
   <script>
-    // สคริปต์ควบคุมการว่ายวน โดยใช้ lookAt หันหัวปลาไปยังพิกัดเป้าหมายล่วงหน้า
+    // สคริปต์ควบคุมการว่ายวน คำนวณจุดมุ่งหมายด้านหน้า และปรับหัวปลาให้พุ่งนำเสมอ
     AFRAME.registerComponent('swim-fish', {
       schema: {
         radius: { type: 'number', default: 0.5 },
@@ -97,12 +97,12 @@
 
         this.el.object3D.position.set(x, y, z);
 
-        // คำนวณตำแหน่งล่วงหน้า 1 สเต็ปเพื่อหาทิศทางมุ่งหน้าไป
+        // หาตำแหน่งล่วงหน้าเพื่อกำหนดทิศทางเดินหน้า
         const nextRad = THREE.MathUtils.degToRad(this.angle + 1);
         const nextX = Math.cos(nextRad) * r;
         const nextZ = Math.sin(nextRad) * r;
 
-        // ใช้ lookAt หันหัวปลาพุ่งไปยังจุดเป้าหมายด้านหน้าเสมอ
+        // หันหัวปลาไปยังพิกัดข้างหน้า
         this.targetVec.set(nextX, y, nextZ);
         this.el.object3D.lookAt(this.targetVec);
 
@@ -114,17 +114,17 @@
       }
     });
 
-    // สร้างโมเดลปลา (หมุนโมเดลภายใน +90 เพื่อให้ส่วนหัวพุ่งไปทาง -Z ตามมาตรฐาน lookAt)
+    // สร้างโมเดลปลา (ปรับมุมภายในเป็น -90 เพื่อส่งส่วนหัวออกด้านหน้าพอดี)
     function createFishEntity(data) {
       const fish = document.createElement('a-entity');
       fish.setAttribute('swim-fish', `radius: ${data.radius}; speed: ${data.speed}; height: ${data.height}; phase: ${data.phase}`);
 
       fish.innerHTML = `
-        <a-entity rotation="0 90 0" scale="0.6 0.6 0.6">
+        <a-entity rotation="0 -90 0" scale="0.6 0.6 0.6">
           <!-- ลำตัวปลา -->
           <a-sphere position="0 0 0" radius="0.2" scale="1 0.5 0.3" color="${data.bodyColor}"></a-sphere>
 
-          <!-- ตาซ้าย-ขวา (ส่วนหัว) -->
+          <!-- ตาซ้าย-ขวา (ส่วนหัวพุ่งนำหน้า) -->
           <a-sphere position="0.12 0.03 0.04" radius="0.03" color="#ffffff">
             <a-sphere position="0.01 0 0.015" radius="0.012" color="#000000"></a-sphere>
           </a-sphere>
@@ -139,7 +139,7 @@
           <a-box position="0.04 -0.02 0.07" rotation="15 -30 -10" width="0.08" height="0.008" depth="0.04" color="${data.finColor}"></a-box>
           <a-box position="0.04 -0.02 -0.07" rotation="-15 -30 10" width="0.08" height="0.008" depth="0.04" color="${data.finColor}"></a-box>
 
-          <!-- ข้อต่อหางส่ายได้ (ส่วนหางอยู่ด้านหลัง) -->
+          <!-- ข้อต่อหางส่ายได้ (ต่อไว้ด้านหลัง) -->
           <a-entity class="fish-tail" position="-0.18 0 0">
             <a-cone position="-0.06 0 0" rotation="0 0 -90" radius-bottom="0.1" radius-top="0.001" height="0.12" color="${data.finColor}"></a-cone>
           </a-entity>
