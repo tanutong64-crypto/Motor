@@ -96,10 +96,12 @@
 
         this.el.object3D.position.set(x, y, z);
 
-        // คำนวณ Vector ทิศทางการเคลื่อนที่และกลับมุม 180 องศา (+ Math.PI) ให้หัวปลาพุ่งไปข้างหน้า
+        // Vector ทิศทางการเคลื่อนที่
         const dx = -Math.sin(rad);
         const dz = Math.cos(rad);
-        this.el.object3D.rotation.y = -Math.atan2(dz, dx) + Math.PI;
+
+        // หันหัวปลา (แกน +X) ไปตามทิศทางเคลื่อนที่อย่างถูกต้อง
+        this.el.object3D.rotation.y = Math.atan2(-dz, dx);
 
         // ส่ายหาง
         const tail = this.el.querySelector('.fish-tail');
@@ -116,10 +118,10 @@
 
       fish.innerHTML = `
         <a-entity scale="0.6 0.6 0.6">
-          <!-- ลำตัวปลา -->
+          <!-- ลำตัวปลา (หัวหันไปทางแกน +X) -->
           <a-sphere position="0 0 0" radius="0.2" scale="1 0.5 0.3" color="${data.bodyColor}"></a-sphere>
 
-          <!-- ตาซ้าย-ขวา -->
+          <!-- ตาซ้าย-ขวา อยู่ด้านหน้า (+X) -->
           <a-sphere position="0.12 0.03 0.04" radius="0.03" color="#ffffff">
             <a-sphere position="0.01 0 0.015" radius="0.012" color="#000000"></a-sphere>
           </a-sphere>
@@ -134,7 +136,7 @@
           <a-box position="0.04 -0.02 0.07" rotation="15 -30 -10" width="0.08" height="0.008" depth="0.04" color="${data.finColor}"></a-box>
           <a-box position="0.04 -0.02 -0.07" rotation="-15 -30 10" width="0.08" height="0.008" depth="0.04" color="${data.finColor}"></a-box>
 
-          <!-- ข้อต่อหางส่ายได้ -->
+          <!-- ข้อต่อหางส่ายได้ อยู่ด้านหลัง (-X) -->
           <a-entity class="fish-tail" position="-0.18 0 0">
             <a-cone position="-0.06 0 0" rotation="0 0 -90" radius-bottom="0.1" radius-top="0.001" height="0.12" color="${data.finColor}"></a-cone>
           </a-entity>
@@ -198,7 +200,7 @@
     <a-marker preset="hiro" id="hiro-marker">
       <a-entity id="fish-group" position="0 0 0"></a-entity>
       <!-- วงน้ำบนพื้น Marker -->
-      <a-ring position="0 0.02 0" rotation="90 0 0" radius-inner="0.1" radius-outer="1.0" color="#00d2d3" opacity="0.25"></a-ring>
+      <a-ring position="0 0.02 0" rotation="-90 0 0" radius-inner="0.1" radius-outer="1.0" color="#00d2d3" opacity="0.25"></a-ring>
     </a-marker>
 
     <a-entity camera></a-entity>
